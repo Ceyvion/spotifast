@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Theme tokens: Appearance before and after</title>
+<style>
+  :root { --bg:#f6f7f9; --fg:#14171a; --muted:#59606b; --line:#d9dde3; --chip:#e9ecf0; --on:#14171a; --onfg:#fff; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0f1114; --fg:#f2f4f6; --muted:#a9b1bc; --line:#2a3038; --chip:#1d2127; --on:#f2f4f6; --onfg:#0f1114; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.5 -apple-system, BlinkMacSystemFont, "Inter", sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p { color: var(--muted); margin: 0 0 16px; }
+  .bar { display:flex; flex-wrap:wrap; gap:16px; align-items:center; margin: 0 0 16px; }
+  .group { display:flex; gap:4px; background:var(--chip); padding:4px; border-radius:999px; }
+  button { border:0; background:transparent; color:var(--fg); font:inherit; padding:6px 14px; border-radius:999px; cursor:pointer; }
+  button[aria-pressed="true"] { background:var(--on); color:var(--onfg); }
+  .stage { position:relative; display:inline-block; max-width:100%; border:1px solid var(--line); border-radius:10px; overflow:hidden; line-height:0; }
+  .stage img { display:block; max-width:100%; height:auto; }
+  .stage .after { position:absolute; inset:0; clip-path: inset(0 0 0 var(--cut, 50%)); }
+  .stage .handle { position:absolute; top:0; bottom:0; left:var(--cut, 50%); width:2px; background:#e5484d; pointer-events:none; }
+  .stage.whole .after { clip-path:none; }
+  .stage.whole .handle, .stage.base .handle { display:none; }
+  .stage.base .after { display:none; }
+  input[type=range] { width: 220px; }
+  .label { font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Settings → Appearance: theme from an image and colour tokens</h1>
+  <p>Baseline <code>main</code> 995c768, candidate this pull request. Demo mode on macOS 27 (arm64) at 2x; normal is 1100 pt wide, narrow is 760 pt (the minimum). Cropped to the Appearance section.</p>
+  <div class="bar">
+    <div class="group" data-key="theme"><button data-v="dark">Dark</button><button data-v="light">Light</button></div>
+    <div class="group" data-key="size"><button data-v="normal">Normal</button><button data-v="narrow">Narrow</button></div>
+    <div class="group" data-key="view"><button data-v="before">Before</button><button data-v="after">After</button><button data-v="slider">Slider</button></div>
+    <label class="label" id="cutlabel">Slider <input id="cut" type="range" min="0" max="100" value="50"></label>
+  </div>
+  <div class="stage" id="stage">
+    <img class="before" id="before" alt="Before">
+    <img class="after" id="after" alt="After">
+    <div class="handle"></div>
+  </div>
+</main>
+<script>
+  const state = { theme: "dark", size: "normal", view: "after" };
+  const stage = document.getElementById("stage");
+  function render() {
+    document.querySelectorAll(".group").forEach(g => g.querySelectorAll("button").forEach(b =>
+      b.setAttribute("aria-pressed", String(state[g.dataset.key] === b.dataset.v))));
+    // The taller after-capture sets the frame; the before sits on top of it in the slider.
+    document.getElementById("before").src = `before-${state.theme}-${state.size}.png`;
+    document.getElementById("after").src = `after-${state.theme}-${state.size}.png`;
+    stage.className = "stage " + (state.view === "before" ? "base" : state.view === "after" ? "whole" : "");
+    document.getElementById("cutlabel").style.visibility = state.view === "slider" ? "visible" : "hidden";
+  }
+  document.querySelectorAll(".group").forEach(g => g.addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return; state[g.dataset.key] = b.dataset.v; render();
+  }));
+  document.getElementById("cut").addEventListener("input", e => stage.style.setProperty("--cut", e.target.value + "%"));
+  render();
+</script>
+</body>
+</html>
